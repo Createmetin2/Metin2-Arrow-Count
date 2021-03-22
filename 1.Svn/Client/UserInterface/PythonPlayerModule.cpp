@@ -12,20 +12,23 @@ PyObject* playerGetArrowStatus(PyObject* poSelf, PyObject* poArgs)
 			CItemData* pItemData = nullptr;
 			if (CItemManager::Instance().GetItemDataPointer(Weapon->vnum, &pItemData))
 			{
-				if (pItemData->GetType() == CItemData::EItemType::ITEM_TYPE_WEAPON)
+				if (pItemData->GetSubType() == CItemData::EWeaponSubTypes::WEAPON_BOW)
 				{
-					if (pItemData->GetSubType() == CItemData::EWeaponSubTypes::WEAPON_BOW)
+					// Count, Total(same vnum)
+					// Same Vnum? : When the arrow ends, if there is the same arrow in inventory, it will be equipped automatically.
+					const auto Arrow = player->GetItemData(TItemPos(EQUIPMENT, c_Equipment_Arrow));
+					if (Arrow)
 					{
-						// Count, Total(same vnum)
-						// Same Vnum? : When the arrow ends, if there is the same arrow in inventory, it will be equipped automatically.
-						const auto Arrow = player->GetItemData(TItemPos(EQUIPMENT, c_Equipment_Arrow));
-						if (Arrow)
-							return Py_BuildValue("ii", Arrow->count, Arrow->vnum ? player->GetItemCountByVnum(Arrow->vnum) : 0);
-					}
 #if defined(ENABLE_QUIVER_SYSTEM)
-					else if (pItemData->GetSubType() == CItemData::EWeaponSubTypes::WEAPON_QUIVER)
-						return Py_BuildValue("ii", -2, 0); // unlimited
+						CItemData* pArrowData = nullptr;
+						if (Arrow->vnum && CItemManager::Instance().GetItemDataPointer(Arrow->vnum, &pArrowData))
+						{
+							if (pArrowData->GetSubType() == CItemData::EWeaponSubTypes::WEAPON_QUIVER)
+								return Py_BuildValue("ii", -2, 0); // unlimited
+						}
 #endif
+						return Py_BuildValue("ii", Arrow->count, Arrow->vnum ? player->GetItemCountByVnum(Arrow->vnum) : 0);
+					}
 				}
 			}
 		}
